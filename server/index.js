@@ -46,34 +46,9 @@ app.get("/people", (req, res) => {
 });
 
 app.get("/people/:sortBy", (req, res) => {
-//   let peopleArray = [];
-let peopleArray = []
+  let peopleArray = [];
 
-    axios.get('https://swapi.co/api/people').then(result => {
-        let param = req.params.sortBy;
-  
-        for(let i = 0; i < result.data.results.length; i++){
-            peopleArray.push(result.data.results[i])
-        }
-
-        for (let i = 2; i < 10; i++) {
-            let tempString = `https://swapi.co/api/people/?page=${i}`;
-            promises.push(axios.get(tempString));
-          }
-        
-          Promise.all(promises).then(results => {
-              results.forEach(item => {        
-                    people.push(item.data.results)
-              })
-              for(let i = 0; i < people.length; i++){
-                  for(let j = 0; j < people[i].length; j++){
-                      peopleArray.push(people[i][j])
-                  }
-              }
-            //   res.send(peopleArray)
-          })
-    })
-
+  let param = req.params.sortBy;
 
   axios.get(`https://swapi.co/api/people`).then(result => {
     peopleArray = result.data.results;
