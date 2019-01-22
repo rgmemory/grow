@@ -9,22 +9,15 @@ let app = express();
 app.use(bodyParser.json());
 
 let promises = [];
-let planets = [];
 let people = [];
 let peopleArray = [];
-let planetPromises = [];
-let itemArray = [];
-let axiosPlanetArray = [];
-let axiosResults = [];
 
 app.listen(port, () => {
   console.log(`listening on port ${port}`);
 });
 
-
 //Gets a list of people using a loop that dynamically adjusts to the number of people the API makes available.
 app.get("/people", (req, res) => {
-  let peopleArray = [];
 
   axios.get("https://swapi.co/api/people").then(result => {
     let loopCounter = Math.ceil(result.data.count / 10) + 1;
@@ -103,60 +96,177 @@ app.get("/people/:sortBy", (req, res) => {
   });
 });
 
-
-
 //Gets a list of planets using a loop that dynamically adjusts to the number of planets the API makes available.
 app.get("/planets", (req, res) => {
-  let planetsArray = [];
+ 
+  async function test() {
+    let residentsArray = [];
+    let result = await axios.get("https://swapi.co/api/planets");
 
-  axios.get("https://swapi.co/api/planets").then(result => {
+    let planetsArray = result.data.results;
+
     let loopCounter = Math.ceil(result.data.count / 10) + 1;
 
-    for (let i = 0; i < result.data.results.length; i++) {
-      planetsArray.push(result.data.results[i]);
+
+         for (let i = 2; i < loopCounter; i++) {
+           let tempString = `https://swapi.co/api/planets/?page=${i}`;
+           let additionalPlanets = await axios.get(tempString)
+
+           additionalPlanets.data.results.forEach(current => {
+               planetsArray.push(current)
+           })
     }
 
-    for (let i = 2; i < loopCounter; i++) {
-      let tempString = `https://swapi.co/api/planets/?page=${i}`;
-      promises.push(axios.get(tempString));
+    for (let i = 0; i < planetsArray.length; i++) {
+      residentsArray = planetsArray[i].residents;
+
+      if(residentsArray.length >= 1){
+          for (let j = 0; j < residentsArray.length; j++) {
+            let tempString = residentsArray[j];
+    
+            let resident = await axios.get(tempString);
+            planetsArray[i].residents[j] = resident.data.name
+          }
+      }else{
+          console.log('no residents', i)
+      }
     }
 
-    Promise.all(promises).then(results => {
-      results.forEach(item => {
-        planets.push(item.data.results);
-      });
-      for (let i = 0; i < planets.length; i++) {
-        for (let j = 0; j < planets[i].length; j++) {
-          planetsArray.push(planets[i][j]);
-        }
-      }
+    return planetsArray;
+  }
 
-      for (let x = 0; x < planetsArray.length; x++) {
-        console.log(planetsArray[x].name, "----", x + 1);
-        let residentCounter = 0;
+  test().then(result => res.send(result));
 
-        for (let i = 0; i < planetsArray[x].residents.length; i++) {
-          residentCounter++;
 
-          let tempString = planetsArray[x].residents[i];
 
-          axiosPlanetArray.push(axios.get(tempString));
-        }
 
-        if (axiosPlanetArray.length >= 1) {
-          Promise.all(axiosPlanetArray).then(results => {
-            results.forEach((item, index) => {
-              //////////////////I'm able to retrive the residents of each planet and console.log them but I'm still working on getting them in the correct order
-              //////////////////and replacing them in data that I send back to the user
-              console.log(item.data.name);
-            });
-          });
-        }
 
-        axiosPlanetArray = [];
-      }
 
-      res.send(planetsArray);
-    });
-  });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  //   axios.get("https://swapi.co/api/planets").then(result => {
+  //     let loopCounter = Math.ceil(result.data.count / 10) + 1;
+
+  //     for (let i = 0; i < result.data.results.length; i++) {
+  //       planetsArray.push(result.data.results[i]);
+  //     }
+
+  //     for (let i = 2; i < loopCounter; i++) {
+  //       let tempString = `https://swapi.co/api/planets/?page=${i}`;
+  //       promises.push(axios.get(tempString));
+  //     }
+
+  //     Promise.all(promises).then(results => {
+  //       results.forEach(item => {
+  //         planets.push(item.data.results);
+  //       });
+  //       for (let i = 0; i < planets.length; i++) {
+  //         for (let j = 0; j < planets[i].length; j++) {
+  //           planetsArray.push(planets[i][j]);
+  //         }
+  //       }
+
+  //       for (let x = 0; x < planetsArray.length; x++) {
+  //         console.log(planetsArray[x].name, "----", x + 1);
+  //         let residentCounter = 0;
+
+  //         for (let i = 0; i < planetsArray[x].residents.length; i++) {
+  //           residentCounter++;
+
+  //           let tempString = planetsArray[x].residents[i];
+
+  //           axiosPlanetArray.push(axios.get(tempString));
+  //         }
+
+  //         if (axiosPlanetArray.length >= 1) {
+  //           Promise.all(axiosPlanetArray).then(results => {
+  //             results.forEach((item, index) => {
+
+  //               console.log(item.data.name);
+  //             });
+  //           });
+  //         }
+
+  //         axiosPlanetArray = [];
+  //       }
+
+  //       res.send(planetsArray);
+  //     });
+  //   });
 });
+
+// //Gets a list of planets using a loop that dynamically adjusts to the number of planets the API makes available.
+// app.get("/planets", (req, res) => {
+//   let planetsArray = [];
+
+//   axios.get("https://swapi.co/api/planets").then(result => {
+//     let loopCounter = Math.ceil(result.data.count / 10) + 1;
+
+//     for (let i = 0; i < result.data.results.length; i++) {
+//       planetsArray.push(result.data.results[i]);
+//     }
+
+//     for (let i = 2; i < loopCounter; i++) {
+//       let tempString = `https://swapi.co/api/planets/?page=${i}`;
+//       promises.push(axios.get(tempString));
+//     }
+
+//     Promise.all(promises).then(results => {
+//       results.forEach(item => {
+//         planets.push(item.data.results);
+//       });
+//       for (let i = 0; i < planets.length; i++) {
+//         for (let j = 0; j < planets[i].length; j++) {
+//           planetsArray.push(planets[i][j]);
+//         }
+//       }
+
+//       for (let x = 0; x < planetsArray.length; x++) {
+//         console.log(planetsArray[x].name, "----", x + 1);
+//         let residentCounter = 0;
+
+//         for (let i = 0; i < planetsArray[x].residents.length; i++) {
+//           residentCounter++;
+
+//           let tempString = planetsArray[x].residents[i];
+
+//           axiosPlanetArray.push(axios.get(tempString));
+//         }
+
+//         if (axiosPlanetArray.length >= 1) {
+//           Promise.all(axiosPlanetArray).then(results => {
+//             results.forEach((item, index) => {
+//               //////////////////I'm able to retrive the residents of each planet and console.log them but I'm still working on getting them in the correct order
+//               //////////////////and replacing them in data that I send back to the user
+//               console.log(item.data.name);
+//             });
+//           });
+//         }
+
+//         axiosPlanetArray = [];
+//       }
+
+//       res.send(planetsArray);
+//     });
+//   });
+// });
